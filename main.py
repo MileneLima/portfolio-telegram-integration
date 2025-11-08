@@ -1,3 +1,9 @@
+"""
+Sistema de controle financeiro pessoal via Telegram com IA
+
+Author: Milene Lima
+"""
+
 import logging
 from contextlib import asynccontextmanager
 
@@ -11,11 +17,9 @@ from bot.telegram_bot import TelegramFinanceBot
 from database.sqlite_db import init_database
 
 
-# Setup logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# Global bot instance
 bot_instance = None
 
 
@@ -25,14 +29,11 @@ async def lifespan(app: FastAPI):
     global bot_instance
 
     try:
-        # Startup
         logger.info("🔄 Iniciando Telegram Finance Bot...")
 
-        # Inicializar database
         await init_database()
         logger.info("✅ Database inicializado")
 
-        # Inicializar bot
         bot_instance = TelegramFinanceBot()
         await bot_instance.setup()
         logger.info("✅ Bot configurado com sucesso")
@@ -43,13 +44,11 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ Erro durante startup: {e}")
         raise
     finally:
-        # Shutdown
         if bot_instance:
             await bot_instance.stop()
         logger.info("👋🏻 Aplicação finalizada")
 
 
-# Criar aplicaÃ§Ã£o FastAPI
 settings = get_settings()
 app = FastAPI(
     title="Telegram Finance Bot",
@@ -86,11 +85,9 @@ async def telegram_webhook(request: Request):
         if not bot_instance:
             raise HTTPException(status_code=500, detail="Bot not initialized")
 
-        # Pegar dados do webhook
         update_data = await request.json()
         logger.info(f"Received webhook update: {update_data.get('update_id')}")
 
-        # Processar update
         await bot_instance.process_update(update_data)
 
         return JSONResponse({"status": "ok"})

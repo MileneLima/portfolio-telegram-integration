@@ -1,3 +1,7 @@
+"""
+Testes básicos da aplicação
+"""
+
 import pytest
 from decimal import Decimal
 from datetime import date
@@ -58,7 +62,7 @@ class TestUtils:
         """Testar nomes de meses"""
         assert get_month_name(1) == "Janeiro"
         assert get_month_name(12) == "Dezembro"
-        assert get_month_name(13) == "Janeiro"
+        assert get_month_name(13) == "Janeiro"  # Fallback
 
 
 @pytest.mark.asyncio

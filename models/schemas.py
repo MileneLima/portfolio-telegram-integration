@@ -1,5 +1,9 @@
+"""
+Schemas Pydantic para validação de dados
+"""
+
 from datetime import datetime, date
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator
@@ -13,6 +17,7 @@ class ExpenseCategory(str, Enum):
     SAUDE = "Saúde"
     LAZER = "Lazer"
     CASA = "Casa"
+    FINANCAS = "Finanças"
     OUTROS = "Outros"
 
 
@@ -21,6 +26,12 @@ class TransactionStatus(str, Enum):
     PENDING = "pending"
     PROCESSED = "processed"
     ERROR = "error"
+
+
+class InsightsPeriod(str, Enum):
+    """Períodos para geração de insights"""
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
 
 
 class MessageInput(BaseModel):
@@ -43,7 +54,6 @@ class InterpretedTransaction(BaseModel):
     @field_validator('valor', mode='before')
     def validate_valor(cls, v):
         if isinstance(v, str):
-            # Remover caracteres não numéricos exceto vírgula e ponto
             import re
             v = re.sub(r'[^0-9.,]', '', v)
             v = v.replace(',', '.')
@@ -68,6 +78,18 @@ class BotResponse(BaseModel):
     success: bool = True
     transaction_id: Optional[int] = None
     data: Optional[Dict[str, Any]] = None
+
+
+class FinancialInsights(BaseModel):
+    """Insights financeiros gerados pela IA"""
+    period_type: InsightsPeriod = Field(..., description="Tipo de período analisado")
+    period_description: str = Field(..., description="Descrição do período (ex: 'Outubro 2025', 'Ano 2025')")
+    total_expenses: Decimal = Field(..., description="Total de gastos no período")
+    total_investments: Decimal = Field(default=Decimal('0'), description="Total de investimentos no período")
+    category_breakdown: Dict[str, Decimal] = Field(..., description="Gastos por categoria")
+    top_category: str = Field(..., description="Categoria com maior gasto")
+    insights_text: str = Field(..., description="Análise textual gerada pela IA")
+    recommendations: List[str] = Field(default_factory=list, description="Recomendações da IA")
 
 
 class InsightRequest(BaseModel):

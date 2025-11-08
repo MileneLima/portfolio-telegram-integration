@@ -1,3 +1,7 @@
+"""
+Configuração de logging da aplicação
+"""
+
 import logging
 import sys
 from pathlib import Path

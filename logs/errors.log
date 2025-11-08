@@ -1,0 +1,44 @@
+2025-11-08 10:24:34 | ERROR    | services.sheets_service:add_transaction:176 | ❌ Erro ao adicionar transação: {'code': 429, 'message': "Quota exceeded for quota metric 'Read requests' and limit 'Read requests per minute per user' of service 'sheets.googleapis.com' for consumer 'project_number:79508683601'.", 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'RATE_LIMIT_EXCEEDED', 'domain': 'googleapis.com', 'metadata': {'consumer': 'projects/79508683601', 'quota_location': 'global', 'service': 'sheets.googleapis.com', 'quota_limit': 'ReadRequestsPerMinutePerUser', 'quota_unit': '1/min/{project}/{user}', 'quota_metric': 'sheets.googleapis.com/read_requests', 'quota_limit_value': '60'}}, {'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Request a higher quota limit.', 'url': 'https://cloud.google.com/docs/quotas/help/request_increase'}]}]}
+2025-11-08 10:24:34 | ERROR    | bot.telegram_bot:handle_expense_message:643 | ❌ Erro ao processar mensagem: {'code': 429, 'message': "Quota exceeded for quota metric 'Read requests' and limit 'Read requests per minute per user' of service 'sheets.googleapis.com' for consumer 'project_number:79508683601'.", 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'RATE_LIMIT_EXCEEDED', 'domain': 'googleapis.com', 'metadata': {'consumer': 'projects/79508683601', 'quota_location': 'global', 'service': 'sheets.googleapis.com', 'quota_limit': 'ReadRequestsPerMinutePerUser', 'quota_unit': '1/min/{project}/{user}', 'quota_metric': 'sheets.googleapis.com/read_requests', 'quota_limit_value': '60'}}, {'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Request a higher quota limit.', 'url': 'https://cloud.google.com/docs/quotas/help/request_increase'}]}]}
+2025-11-08 10:25:41 | ERROR    | uvicorn.lifespan.on:send:134 | Traceback (most recent call last):
+  File "/Users/lazarim/workspace/freelancer/telegram-finbot/.venv/lib/python3.9/site-packages/starlette/routing.py", line 686, in lifespan
+    await receive()
+  File "/Users/lazarim/.pyenv/versions/3.9.23/lib/python3.9/contextlib.py", line 188, in __aexit__
+    await self.gen.__anext__()
+  File "/Users/lazarim/workspace/freelancer/telegram-finnbot/main.py", line 48, in lifespan
+    await bot_instance.stop()
+  File "/Users/lazarim/workspace/freelancer/telegram-finnbot/bot/telegram_bot.py", line 751, in stop
+    await self.application.stop()
+  File "/Users/lazarim/workspace/freelancer/telegram-finbot/.venv/lib/python3.9/site-packages/telegram/ext/_application.py", line 663, in stop
+    raise RuntimeError("This Application is not running!")
+RuntimeError: This Application is not running!
+
+2025-11-08 10:25:41 | ERROR    | uvicorn.lifespan.on:shutdown:73 | Application shutdown failed. Exiting.
+2025-11-08 10:27:14 | ERROR    | uvicorn.lifespan.on:send:134 | Traceback (most recent call last):
+  File "/Users/lazarim/workspace/freelancer/telegram-finbot/.venv/lib/python3.9/site-packages/starlette/routing.py", line 686, in lifespan
+    await receive()
+  File "/Users/lazarim/.pyenv/versions/3.9.23/lib/python3.9/contextlib.py", line 188, in __aexit__
+    await self.gen.__anext__()
+  File "/Users/lazarim/workspace/freelancer/telegram-finnbot/main.py", line 48, in lifespan
+    await bot_instance.stop()
+  File "/Users/lazarim/workspace/freelancer/telegram-finnbot/bot/telegram_bot.py", line 751, in stop
+    await self.application.stop()
+  File "/Users/lazarim/workspace/freelancer/telegram-finbot/.venv/lib/python3.9/site-packages/telegram/ext/_application.py", line 663, in stop
+    raise RuntimeError("This Application is not running!")
+RuntimeError: This Application is not running!
+
+2025-11-08 10:27:14 | ERROR    | uvicorn.lifespan.on:shutdown:73 | Application shutdown failed. Exiting.
+2025-11-08 10:29:53 | ERROR    | uvicorn.lifespan.on:send:134 | Traceback (most recent call last):
+  File "/Users/lazarim/workspace/freelancer/telegram-finbot/.venv/lib/python3.9/site-packages/starlette/routing.py", line 686, in lifespan
+    await receive()
+  File "/Users/lazarim/.pyenv/versions/3.9.23/lib/python3.9/contextlib.py", line 188, in __aexit__
+    await self.gen.__anext__()
+  File "/Users/lazarim/workspace/freelancer/telegram-finnbot/main.py", line 48, in lifespan
+    await bot_instance.stop()
+  File "/Users/lazarim/workspace/freelancer/telegram-finnbot/bot/telegram_bot.py", line 751, in stop
+    await self.application.stop()
+  File "/Users/lazarim/workspace/freelancer/telegram-finbot/.venv/lib/python3.9/site-packages/telegram/ext/_application.py", line 663, in stop
+    raise RuntimeError("This Application is not running!")
+RuntimeError: This Application is not running!
+
+2025-11-08 10:29:53 | ERROR    | uvicorn.lifespan.on:shutdown:73 | Application shutdown failed. Exiting.

@@ -1,3 +1,7 @@
+"""
+Utilidades gerais da aplicação
+"""
+
 import hashlib
 from datetime import datetime, date
 from typing import Any, Dict, List
@@ -29,7 +33,7 @@ def format_currency(value: float, currency: str = "BRL") -> str:
 
 
 def parse_date_text(text: str) -> date:
-    """Extrair data de texto em portuguÃªs"""
+    """Extrair data de texto em português"""
     today = date.today()
 
     if "hoje" in text.lower():
@@ -43,7 +47,7 @@ def parse_date_text(text: str) -> date:
 
 
 def extract_numbers(text: str) -> List[float]:
-    """Extrair nÃºmeros de um texto"""
+    """Extrair números de um texto"""
     import re
 
     pattern = r'\d+(?:[.,]\d{2})?'
