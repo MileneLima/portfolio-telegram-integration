@@ -132,15 +132,18 @@ class TestInvestmentMessageProcessing:
         mock_spreadsheet = MagicMock()
         mock_worksheet = MagicMock()
         
-        mock_worksheet.row_values.return_value = ["Mês", "Total Gastos", "Alimentação", "Transporte", "Saúde", "Lazer", "Casa", "Outros", "Transações"]
+        mock_worksheet.row_values.return_value = ["Mês", "Total Gastos", "Alimentação", "Transporte", "Saúde", "Lazer", "Casa", "Finanças", "Outros", "Transações"]
+        mock_worksheet.get_all_values.return_value = [
+            ["Mês", "Total Gastos", "Alimentação", "Transporte", "Saúde", "Lazer", "Casa", "Finanças", "Outros", "Transações"],
+            ["Janeiro", "100", "50", "30", "10", "5", "3", "2", "0", "5"]
+        ]
         mock_spreadsheet.worksheet.return_value = mock_worksheet
         
         sheets_service.spreadsheet = mock_spreadsheet
         
-        await sheets_service.update_summary_structure()
+        await sheets_service._update_summary()
         
-        mock_worksheet.insert_cols.assert_called_once()
-        mock_worksheet.update_cell.assert_called()
+        mock_worksheet.update.assert_called()
 
     @pytest.mark.asyncio
     async def test_investment_transaction_storage_and_sync(self, sheets_service):
@@ -160,21 +163,25 @@ class TestInvestmentMessageProcessing:
         
         mock_spreadsheet.worksheet.side_effect = lambda name: mock_monthly_ws if name != "Resumo" else mock_resumo_ws
         mock_monthly_ws.get_all_values.return_value = [
-            ["Data", "Descrição", "Categoria", "Valor", "Observações"],
-            ["31/10/2025", "Poupança conta", "Finanças", "300.0", "Confiança: 90%"]
+            ["ID", "Data", "Descrição", "Categoria", "Valor", "Observações"],
+            ["1", "31/10/2025", "Poupança conta", "Finanças", "300.0", "Confiança: 90%"]
+        ]
+        mock_resumo_ws.get_all_values.return_value = [
+            ["Mês", "Total Gastos", "Alimentação", "Transporte", "Saúde", "Lazer", "Casa", "Finanças", "Outros", "Transações"]
         ]
         
         sheets_service.spreadsheet = mock_spreadsheet
         
-        row_number = await sheets_service.add_transaction(investment_transaction)
+        row_number = await sheets_service.add_transaction(investment_transaction, transaction_id=123)
         
         mock_monthly_ws.append_row.assert_called_once()
         call_args = mock_monthly_ws.append_row.call_args[0][0]
         
-        assert call_args[1] == "Poupança conta"
-        assert call_args[2] == "Finanças"
-        assert call_args[3] == 300.0
-        assert "Confiança: 90" in call_args[4]
+        assert call_args[0] == 123
+        assert call_args[2] == "Poupança conta"
+        assert call_args[3] == "Finanças"
+        assert call_args[4] == 300.0
+        assert "Confiança: 90" in call_args[5]
         
         assert isinstance(row_number, int)
 
@@ -267,7 +274,7 @@ class TestInsightsGeneration:
             
             assert insights.period_type == InsightsPeriod.YEARLY
             assert insights.period_description == "Ano 2025"
-            assert insights.total_expenses == Decimal("2400.00")  # 1800 + 600
+            assert insights.total_expenses == Decimal("2400.00")
             assert insights.total_investments == Decimal("2400.00")
             assert "Alimentação" in insights.category_breakdown
             assert insights.category_breakdown["Alimentação"] == Decimal("1800.00")
@@ -372,23 +379,10 @@ class TestEnhancedSummaryCommand:
 
     @pytest.mark.asyncio
     async def test_yearly_summary_aggregation(self, telegram_bot):
-        """Testar agregação de dados para resumo anual"""
+        """Testar agregação de dados para resumo anual - agora usa database_service"""
         
-        mock_yearly_data = {
-            "periodo": "anual",
-            "total_gastos": 2400.0,
-            "total_financas": 1200.0,
-            "total_transacoes": 24,
-            "categorias_totais": {
-                "Alimentação": 1200.0,
-                "Transporte": 600.0,
-                "Saúde": 300.0,
-                "Lazer": 300.0
-            }
-        }
-        
-        with patch('bot.telegram_bot.sheets_service') as mock_sheets:
-            mock_sheets.get_transactions_for_period = AsyncMock(return_value=[
+        with patch('bot.telegram_bot.database_service') as mock_db:
+            mock_db.get_transactions_for_period = AsyncMock(return_value=[
                 {"descricao": "Supermercado", "valor": 1200.0, "categoria": "Alimentação", "data": "2025-01-15"},
                 {"descricao": "Combustível", "valor": 600.0, "categoria": "Transporte", "data": "2025-02-16"},
                 {"descricao": "Investimento", "valor": 1200.0, "categoria": "Finanças", "data": "2025-03-17"}
@@ -400,6 +394,7 @@ class TestEnhancedSummaryCommand:
             assert len(result) == 3
             assert result[0]["categoria"] == "Alimentação"
             assert result[1]["categoria"] == "Transporte"
+            assert result[2]["categoria"] == "Finanças"
             assert result[2]["categoria"] == "Finanças"
 
     @pytest.mark.asyncio

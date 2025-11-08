@@ -46,7 +46,7 @@ class TestUtils:
 
     def test_extract_numbers(self):
         """Testar extração de números"""
-        text = "Gastei 25,50 no supermercado e 10 reais no cafÃ©"
+        text = "Gastei 25,50 no supermercado e 10 reais no café"
         numbers = extract_numbers(text)
 
         assert 25.50 in numbers
@@ -62,7 +62,7 @@ class TestUtils:
         """Testar nomes de meses"""
         assert get_month_name(1) == "Janeiro"
         assert get_month_name(12) == "Dezembro"
-        assert get_month_name(13) == "Janeiro"  # Fallback
+        assert get_month_name(13) == "Janeiro"
 
 
 @pytest.mark.asyncio

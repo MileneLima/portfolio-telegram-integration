@@ -237,50 +237,6 @@ class DatabaseService:
             logger.error(f"❌ Erro na análise por categoria: {e}")
             return {}
 
-    async def get_spending_trends(self, months: int = 6) -> Dict[str, Any]:
-        """Análise de tendências de gastos nos últimos meses"""
-        try:
-            async for db in get_db_session():
-                result = await db.execute(
-                    select(
-                        extract('year', Transaction.data_transacao).label('ano'),
-                        extract('month', Transaction.data_transacao).label('mes'),
-                        func.sum(Transaction.valor).label('total'),
-                        func.count(Transaction.id).label('transacoes')
-                    )
-                    .where(Transaction.status == 'processed')
-                    .group_by(
-                        extract('year', Transaction.data_transacao),
-                        extract('month', Transaction.data_transacao)
-                    )
-                    .order_by(
-                        extract('year', Transaction.data_transacao).desc(),
-                        extract('month', Transaction.data_transacao).desc()
-                    )
-                    .limit(months)
-                )
-
-                tendencias = []
-                meses_pt = [
-                    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-                ]
-
-                for row in result:
-                    mes_nome = meses_pt[int(row.mes) - 1]
-                    tendencias.append({
-                        "periodo": f"{mes_nome}/{int(row.ano)}",
-                        "total": float(row.total),
-                        "transacoes": row.transacoes,
-                        "media_por_transacao": float(row.total) / row.transacoes if row.transacoes > 0 else 0
-                    })
-
-                return {"tendencias": tendencias}
-
-        except Exception as e:
-            logger.error(f"❌ Erro na análise de tendências: {e}")
-            return {"tendencias": []}
-
     async def get_database_stats(self) -> Dict[str, Any]:
         """Estatísticas gerais do banco de dados"""
         try:

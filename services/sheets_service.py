@@ -1,4 +1,6 @@
-from typing import Dict, Any
+"""
+Serviço de integração com Google Sheets
+"""
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -206,12 +208,12 @@ class GoogleSheetsService:
 
             categorias = ["Alimentação", "Transporte", "Saúde", "Lazer", "Casa", "Outros", "Finanças"]
 
-            for i, mes in enumerate(meses, start=2):  # Começar na linha 2
+            for i, mes in enumerate(meses, start=2):
                 try:
                     mes_ws = self.spreadsheet.worksheet(mes)
                     all_values = mes_ws.get_all_values()
 
-                    if len(all_values) <= 1:  # Só cabeçalho
+                    if len(all_values) <= 1:
                         continue
 
                     total_gastos = 0
@@ -260,33 +262,6 @@ class GoogleSheetsService:
         except Exception as e:
             logger.error(f"❌ Erro ao atualizar resumo: {e}")
 
-    async def get_period_data(self, period_type: str, period_value: str = None) -> Dict[str, Any]:
-        """Obter dados para um período específico (mensal ou anual)"""
-        try:
-            if period_type == "monthly":
-                if period_value:
-                    return await self.get_monthly_summary(period_value)
-                else:
-                    # Retornar mês atual
-                    from datetime import datetime
-                    meses = [
-                        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-                        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-                    ]
-                    mes_atual = meses[datetime.now().month - 1]
-                    return await self.get_monthly_summary(mes_atual)
-            
-            elif period_type == "yearly":
-                return await self.get_yearly_summary()
-            
-            else:
-                logger.error(f"Tipo de período inválido: {period_type}")
-                return {"error": "Tipo de período inválido"}
-                
-        except Exception as e:
-            logger.error(f"Erro ao obter dados do período {period_type}: {e}")
-            return {"error": str(e)}
-
     async def _initial_sync_from_database(self):
         """Sincronização inicial otimizada: SQLite → Google Sheets"""
         try:
@@ -328,12 +303,12 @@ class GoogleSheetsService:
                         monthly_data[month_name] = []
                     
                     row_data = [
-                        str(transaction.id),  # ID
-                        transaction.data_transacao.strftime("%d/%m/%Y"),  # Data
-                        transaction.descricao,  # Descrição
-                        transaction.categoria,  # Categoria
-                        float(transaction.valor),  # Valor
-                        f"Confiança: {transaction.confianca:.0%}"  # Observações
+                        str(transaction.id),
+                        transaction.data_transacao.strftime("%d/%m/%Y"),
+                        transaction.descricao,
+                        transaction.categoria,
+                        float(transaction.valor),
+                        f"Confiança: {transaction.confianca:.0%}"
                     ]
                     monthly_data[month_name].append(row_data)
                 
