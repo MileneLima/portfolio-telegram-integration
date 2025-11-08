@@ -73,7 +73,7 @@ class OpenAIService:
 Interprete esta mensagem sobre gasto pessoal ou investimento em português brasileiro:
 "{message}"
 
-Extraia as informaçõµes e retorne APENAS um JSON válido com os campos:
+Extraia as informações e retorne APENAS um JSON válido com os campos:
 
 - "descricao": nome do estabelecimento/item comprado/investimento (string)
 - "valor": valor numérico em reais (número decimal, ex: 15.50)
@@ -271,6 +271,7 @@ Forneça uma análise concisa incluindo:
 💡 DICAS: 3 recomendações práticas específicas
 
 REGRAS IMPORTANTES:
+- A categoria 'Finanças' se trata de investimentos e dinheiro guardado, não é um gasto, leve isso em consideração sempre
 - Use apenas texto simples com emojis (sem markdown # ## * -)
 - Seja específico com valores e percentuais
 - Linguagem acessível e motivadora
