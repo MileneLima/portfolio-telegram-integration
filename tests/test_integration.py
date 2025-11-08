@@ -381,12 +381,14 @@ class TestEnhancedSummaryCommand:
     async def test_yearly_summary_aggregation(self, telegram_bot):
         """Testar agregação de dados para resumo anual - agora usa database_service"""
         
-        with patch('bot.telegram_bot.database_service') as mock_db:
-            mock_db.get_transactions_for_period = AsyncMock(return_value=[
+        from services import database_service
+        
+        with patch.object(database_service, 'get_transactions_for_period', new_callable=AsyncMock) as mock_method:
+            mock_method.return_value = [
                 {"descricao": "Supermercado", "valor": 1200.0, "categoria": "Alimentação", "data": "2025-01-15"},
                 {"descricao": "Combustível", "valor": 600.0, "categoria": "Transporte", "data": "2025-02-16"},
                 {"descricao": "Investimento", "valor": 1200.0, "categoria": "Finanças", "data": "2025-03-17"}
-            ])
+            ]
             
             result = await telegram_bot._get_insights_data("yearly")
             
@@ -395,30 +397,16 @@ class TestEnhancedSummaryCommand:
             assert result[0]["categoria"] == "Alimentação"
             assert result[1]["categoria"] == "Transporte"
             assert result[2]["categoria"] == "Finanças"
-            assert result[2]["categoria"] == "Finanças"
 
     @pytest.mark.asyncio
     async def test_backward_compatibility_resumo(self, telegram_bot):
         """Testar compatibilidade com uso anterior do /resumo"""
         
-        mock_monthly_data = {
-            "mes": "Outubro",
-            "total": 450.0,
-            "transacoes": 12,
-            "categorias": {
-                "Alimentação": 200.0,
-                "Transporte": 100.0,
-                "Finanças": 150.0
-            }
-        }
+        # Este teste não precisa de mock pois _parse_resumo_parameters não usa serviços externos
+        period_type, period_value = telegram_bot._parse_resumo_parameters([])
         
-        with patch('bot.telegram_bot.sheets_service') as mock_sheets:
-            mock_sheets.get_period_data = AsyncMock(return_value=mock_monthly_data)
-            
-            period_type, period_value = telegram_bot._parse_resumo_parameters([])
-            
-            assert period_type == "monthly"
-            assert period_value is None
+        assert period_type == "monthly"
+        assert period_value is None
 
 
 if __name__ == "__main__":
