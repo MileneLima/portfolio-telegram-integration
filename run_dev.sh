@@ -3,7 +3,7 @@
 echo "🔄 Iniciando bot em modo desenvolvimento..."
 
 if [ -d ".venv" ]; then
-    source venv/bin/activate
+    source .venv/bin/activate
     echo "✅ Ambiente virtual ativado"
 else
     echo "❌ Ambiente virtual não encontrado. Execute ./setup.sh primeiro"
