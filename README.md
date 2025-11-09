@@ -8,6 +8,7 @@ Bot inteligente de controle financeiro pessoal via Telegram com IA, que interpre
 - [Sobre o Projeto](#-sobre-o-projeto)
 - [Funcionalidades](#-funcionalidades)
 - [Como Funciona](#-como-funciona)
+  - [Diagramas C4](#diagramas-c4)
 - [Pré-requisitos](#-pré-requisitos)
 - [Configuração](#️-configuração)
   - [1. Telegram Bot](#1-telegram-bot)
@@ -136,6 +137,114 @@ O **Telegram Finance Bot** é um assistente financeiro pessoal que utiliza intel
 7. Retorna confirmação ao usuário
 ```
 
+### Diagramas C4
+
+#### Nível 1: Diagrama de Contexto
+
+```mermaid
+graph TB
+    User[👤 Usuário<br/>Pessoa que controla<br/>suas finanças]
+    
+    System[🤖 Telegram Finance Bot<br/>Sistema de controle<br/>financeiro com IA]
+    
+    Telegram[📱 Telegram API<br/>Plataforma de mensagens]
+    OpenAI[🧠 OpenAI API<br/>Processamento de<br/>linguagem natural]
+    Sheets[📊 Google Sheets<br/>Visualização e<br/>backup de dados]
+    
+    User -->|Envia gastos em<br/>linguagem natural| Telegram
+    Telegram -->|Entrega mensagens| System
+    System -->|Interpreta texto| OpenAI
+    System -->|Sincroniza dados| Sheets
+    System -->|Envia confirmações| Telegram
+    Telegram -->|Exibe respostas| User
+    User -->|Visualiza planilha| Sheets
+    
+    style System fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
+    style User fill:#2196F3,stroke:#1565C0,stroke-width:2px,color:#fff
+    style Telegram fill:#0088cc,stroke:#006699,stroke-width:2px,color:#fff
+    style OpenAI fill:#10a37f,stroke:#0d8c6d,stroke-width:2px,color:#fff
+    style Sheets fill:#34A853,stroke:#2d8e47,stroke-width:2px,color:#fff
+```
+
+#### Nível 2: Diagrama de Contêineres
+
+```mermaid
+graph TB
+    User[👤 Usuário]
+    
+    subgraph Sistema["🤖 Telegram Finance Bot"]
+        API[FastAPI Application<br/>Python/Uvicorn<br/>Webhook Handler]
+        Bot[Telegram Bot<br/>Processamento de<br/>Comandos e Mensagens]
+        OpenAIService[OpenAI Service<br/>Interpretação de IA<br/>e Insights]
+        SheetsService[Sheets Service<br/>Sincronização<br/>Google Sheets]
+        DBService[Database Service<br/>Consultas e<br/>Análises]
+        DB[(SQLite Database<br/>Armazenamento<br/>Principal)]
+    end
+    
+    Telegram[📱 Telegram API]
+    OpenAI[🧠 OpenAI GPT]
+    Sheets[📊 Google Sheets]
+    
+    User -->|Mensagens| Telegram
+    Telegram -->|Webhook POST| API
+    API -->|Processa Update| Bot
+    Bot -->|Interpreta texto| OpenAIService
+    Bot -->|Salva transação| DBService
+    Bot -->|Sincroniza| SheetsService
+    DBService -->|Read/Write| DB
+    OpenAIService -->|API Calls| OpenAI
+    SheetsService -->|API Calls| Sheets
+    Bot -->|Resposta| API
+    API -->|Confirmação| Telegram
+    Telegram -->|Exibe| User
+    
+    style Sistema fill:#E8F5E9,stroke:#4CAF50,stroke-width:3px
+    style API fill:#FFF9C4,stroke:#F57C00,stroke-width:2px
+    style Bot fill:#BBDEFB,stroke:#1976D2,stroke-width:2px
+    style DB fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+```
+
+#### Nível 3: Diagrama de Componentes (Bot)
+
+```mermaid
+graph TB
+    subgraph TelegramBot["🤖 Telegram Bot Container"]
+        CommandHandlers[Command Handlers<br/>/start /help /resumo<br/>/insights /stats /sync]
+        MessageHandler[Message Handler<br/>Processa gastos em<br/>linguagem natural]
+        
+        subgraph Services["Serviços"]
+            OpenAIService[OpenAI Service<br/>- interpret_message<br/>- generate_insights<br/>- cache_results]
+            SheetsService[Sheets Service<br/>- add_transaction<br/>- sync_data<br/>- update_summary]
+            DBService[Database Service<br/>- get_summary<br/>- get_stats<br/>- get_transactions]
+        end
+        
+        subgraph Models["Modelos de Dados"]
+            Schemas[Pydantic Schemas<br/>InterpretedTransaction<br/>FinancialInsights]
+            DBModels[SQLAlchemy Models<br/>Transaction<br/>UserConfig<br/>AIPromptCache]
+        end
+    end
+    
+    DB[(SQLite DB)]
+    OpenAI[OpenAI API]
+    Sheets[Google Sheets API]
+    
+    CommandHandlers -->|Usa| DBService
+    CommandHandlers -->|Usa| OpenAIService
+    MessageHandler -->|Usa| OpenAIService
+    MessageHandler -->|Usa| DBService
+    MessageHandler -->|Usa| SheetsService
+    
+    OpenAIService -->|Valida com| Schemas
+    OpenAIService -->|Chama| OpenAI
+    SheetsService -->|Chama| Sheets
+    DBService -->|Query| DB
+    DBService -->|Usa| DBModels
+    
+    style TelegramBot fill:#E3F2FD,stroke:#1976D2,stroke-width:3px
+    style Services fill:#FFF9C4,stroke:#F57C00,stroke-width:2px
+    style Models fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+```
+
 ### Exemplo de Uso
 
 ```
@@ -151,11 +260,32 @@ Bot: ✅ Gasto registrado com sucesso!
 
 ### Arquitetura
 
-- **SQLite**: Banco de dados principal (rápido, local)
-- **Google Sheets**: Visualização e backup (sincronização automática)
+O sistema segue uma arquitetura em camadas com separação clara de responsabilidades:
+
+**Camada de Apresentação:**
+- **Telegram Bot API**: Interface com o usuário via mensagens
+- **FastAPI**: Servidor web para receber webhooks
+
+**Camada de Aplicação:**
+- **Bot Handler**: Processa comandos e mensagens
+- **Services**: Lógica de negócio (OpenAI, Sheets, Database)
+
+**Camada de Dados:**
+- **SQLite**: Banco de dados principal (fonte da verdade)
+- **Google Sheets**: Visualização e backup
+- **Cache**: Otimização de chamadas à IA
+
+**Integrações Externas:**
 - **OpenAI GPT**: Interpretação de linguagem natural e insights
-- **FastAPI**: API REST para webhook do Telegram
-- **Telegram Bot API**: Interface com o usuário
+- **Google Sheets API**: Sincronização de dados
+- **Telegram Bot API**: Comunicação com usuários
+
+**Princípios Arquiteturais:**
+- ✅ Single Source of Truth (SQLite)
+- ✅ Separation of Concerns (Services isolados)
+- ✅ Dependency Injection (Pydantic Settings)
+- ✅ Async/Await (Performance otimizada)
+- ✅ Cache Strategy (Redução de custos com IA)
 
 ---
 
