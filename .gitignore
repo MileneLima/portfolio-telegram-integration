@@ -137,6 +137,10 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+.idea
+credentials/google_service_account.json
+logs/
+
 # PyCharm
 #  JetBrains specific template is maintainted in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
