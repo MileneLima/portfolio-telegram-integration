@@ -11,11 +11,12 @@ from decimal import Decimal
 from loguru import logger
 
 from config.settings import get_settings
-from models.schemas import InterpretedTransaction, ExpenseCategory, FinancialInsights, InsightsPeriod
+from models.schemas import InterpretedTransaction, ExpenseCategory, FinancialInsights, InsightsPeriod, TranscriptionResult
 from database.sqlite_db import get_db_session
 from database.models import AIPromptCache
 from sqlalchemy import select
 from openai import AsyncOpenAI
+from utils.error_handler import AudioErrorHandler, audio_metrics
 
 
 class OpenAIService:
@@ -188,6 +189,183 @@ Retorne APENAS o JSON, sem texto adicional:
         except Exception as e:
             logger.warning(f"❌ Erro ao salvar cache: {e}")
 
+
+    async def transcribe_audio(self, audio_file_path: str) -> TranscriptionResult:
+        """Transcrever áudio usando API Whisper da OpenAI"""
+        import os
+        import time
+        import asyncio
+        from pathlib import Path
+        
+        try:
+            # Validar se arquivo existe
+            if not os.path.exists(audio_file_path):
+                raise Exception("Arquivo de áudio não encontrado. Verifique se o arquivo foi enviado corretamente.")
+            
+            # Validar tamanho do arquivo
+            file_size = os.path.getsize(audio_file_path)
+            max_size = 25 * 1024 * 1024  # 25MB
+            if file_size > max_size:
+                raise Exception(f"Arquivo muito grande ({file_size / 1024 / 1024:.1f}MB). O limite máximo é 25MB. Tente dividir o áudio em partes menores.")
+            
+            if file_size == 0:
+                raise Exception("Arquivo de áudio vazio ou corrompido. Tente gravar novamente.")
+            
+            # Validar formato do arquivo
+            file_extension = Path(audio_file_path).suffix.lower()
+            supported_formats = ['.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.ogg', '.oga', '.opus']
+            if file_extension not in supported_formats:
+                formats_str = ', '.join(supported_formats)
+                raise Exception(f"Formato de áudio não suportado ({file_extension}). Formatos aceitos: {formats_str}")
+            
+            start_time = time.time()
+            
+            # Implementar retry com backoff exponencial
+            max_retries = 2
+            base_delay = 1.0
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    logger.info(f"🎵 Transcrevendo áudio (tentativa {attempt + 1}/{max_retries + 1}): {audio_file_path}")
+                    
+                    # Abrir arquivo para transcrição
+                    with open(audio_file_path, 'rb') as audio_file:
+                        response = await self.client.audio.transcriptions.create(
+                            model="whisper-1",
+                            file=audio_file,
+                            language="pt",  # Português brasileiro
+                            response_format="json"
+                        )
+                    
+                    processing_time = time.time() - start_time
+                    
+                    # Validar qualidade da transcrição
+                    transcribed_text = response.text.strip()
+                    if not transcribed_text:
+                        raise Exception("Áudio muito baixo ou com ruído excessivo. Tente gravar em ambiente mais silencioso e fale mais próximo do microfone.")
+                    
+                    # Calcular confiança baseada no comprimento e qualidade
+                    confidence = self._calculate_transcription_confidence(transcribed_text, file_size, processing_time)
+                    
+                    # Obter duração do áudio (estimativa baseada no tamanho)
+                    estimated_duration = self._estimate_audio_duration(file_size, file_extension)
+                    
+                    logger.info(f"✅ Transcrição concluída: {len(transcribed_text)} caracteres em {processing_time:.2f}s")
+                    
+                    # Registrar sucesso nas métricas
+                    audio_metrics.record_success(processing_time)
+                    
+                    return TranscriptionResult(
+                        text=transcribed_text,
+                        confidence=confidence,
+                        language="pt",
+                        duration=estimated_duration,
+                        processing_time=processing_time
+                    )
+                    
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    logger.error(f"❌ Erro na tentativa {attempt + 1} de transcrição: {str(e)}")
+                    
+                    # Verificar se é um erro recuperável
+                    recoverable_errors = [
+                        "timeout", "network", "connection", "rate limit", 
+                        "server error", "503", "502", "500", "429",
+                        "internal server error", "bad gateway", "service unavailable"
+                    ]
+                    
+                    is_recoverable = any(err in error_msg for err in recoverable_errors)
+                    
+                    if attempt < max_retries and is_recoverable:
+                        # Calcular delay com backoff exponencial
+                        delay = base_delay * (2 ** attempt)
+                        logger.warning(f"⚠️ Erro recuperável na tentativa {attempt + 1}: {str(e)}. Tentando novamente em {delay}s...")
+                        await asyncio.sleep(delay)
+                        continue
+                    else:
+                        # Erro não recuperável ou esgotaram-se as tentativas
+                        # Fornecer mensagens de erro específicas e orientações claras
+                        if "rate limit" in error_msg or "429" in error_msg:
+                            raise Exception("Limite de requisições excedido. Aguarde alguns minutos antes de tentar novamente.")
+                        elif "timeout" in error_msg or "network" in error_msg or "connection" in error_msg:
+                            raise Exception("Erro de conexão. Verifique sua internet e tente novamente.")
+                        elif any(server_err in error_msg for server_err in ["server", "503", "502", "500", "unavailable"]):
+                            raise Exception("Serviço temporariamente indisponível. Tente novamente em alguns minutos ou use mensagem de texto.")
+                        elif any(corrupt_err in error_msg for corrupt_err in ["corrupted", "invalid", "malformed"]):
+                            raise Exception("Arquivo de áudio corrompido ou ilegível. Tente gravar novamente.")
+                        elif "permission" in error_msg or "unauthorized" in error_msg or "401" in error_msg:
+                            raise Exception("Erro de autenticação. Verifique as configurações da API.")
+                        elif "quota" in error_msg or "billing" in error_msg:
+                            raise Exception("Cota da API excedida. Verifique sua conta OpenAI.")
+                        elif "unsupported" in error_msg or "format" in error_msg:
+                            raise Exception("Formato de áudio não suportado. Use MP3, WAV, M4A ou WebM.")
+                        else:
+                            # Usar error handler para tratamento robusto
+                            context = {
+                                'file_path': audio_file_path,
+                                'attempt': attempt + 1,
+                                'operation': 'transcription'
+                            }
+                            
+                            # Registrar erro nas métricas
+                            audio_metrics.record_error(e)
+                            
+                            # Obter mensagem amigável
+                            user_friendly_msg = AudioErrorHandler.handle_audio_error(e, context=context)
+                            raise Exception(user_friendly_msg)
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao transcrever áudio: {str(e)}")
+            raise
+    
+    def _calculate_transcription_confidence(self, text: str, file_size: int, processing_time: float) -> float:
+        """Calcular confiança da transcrição baseada em métricas"""
+        confidence = 0.8  # Base
+        
+        # Ajustar baseado no comprimento do texto
+        if len(text) > 50:
+            confidence += 0.1
+        elif len(text) < 10:
+            confidence -= 0.2
+        
+        # Ajustar baseado na qualidade do áudio (tamanho vs tempo)
+        if file_size > 1024 * 1024:  # > 1MB
+            confidence += 0.05
+        
+        # Ajustar baseado no tempo de processamento
+        if processing_time < 5.0:
+            confidence += 0.05
+        
+        # Garantir que está no range válido
+        return max(0.0, min(1.0, confidence))
+    
+    def _estimate_audio_duration(self, file_size: int, file_extension: str) -> float:
+        """Estimar duração do áudio baseada no tamanho do arquivo"""
+        # Estimativas aproximadas baseadas em bitrates típicos
+        bitrate_estimates = {
+            '.mp3': 128,  # kbps
+            '.m4a': 128,
+            '.mp4': 128,
+            '.wav': 1411,  # PCM 16-bit 44.1kHz
+            '.webm': 96,
+            '.ogg': 64,   # Opus típico do Telegram
+            '.oga': 64,
+            '.opus': 64,
+            '.mpeg': 128,
+            '.mpga': 128
+        }
+        
+        bitrate = bitrate_estimates.get(file_extension, 128)  # Default 128 kbps
+        
+        # Calcular duração: (file_size_bits) / (bitrate_bits_per_second)
+        file_size_bits = file_size * 8
+        bitrate_bits_per_second = bitrate * 1000
+        
+        estimated_duration = file_size_bits / bitrate_bits_per_second
+        
+        # Aplicar fator de correção (arquivos têm overhead)
+        correction_factor = 0.9
+        return estimated_duration * correction_factor
 
     async def generate_financial_insights(self, transactions_data: list, period_type: InsightsPeriod, period_description: str) -> FinancialInsights:
         """Gerar insights financeiros usando IA"""

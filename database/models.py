@@ -26,6 +26,10 @@ class Transaction(Base):
     data_transacao = Column(Date, nullable=False, comment="Data da transação")
     confianca = Column(Numeric(3, 2), default=1.0, comment="Nível de confiança da IA")
 
+    # Novos campos para suporte a áudio
+    source_type = Column(String(20), default="text", comment="Tipo de origem: 'text' ou 'audio_transcribed'")
+    transcribed_text = Column(Text, nullable=True, comment="Texto transcrito original do áudio")
+
     status = Column(String(20), default="pending", comment="Status do processamento")
     error_message = Column(Text, nullable=True, comment="Mensagem de erro se houver")
 
@@ -36,7 +40,7 @@ class Transaction(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), comment="Última atualização")
 
     def __repr__(self):
-        return f"<Transaction(id={self.id}, descricao='{self.descricao}', valor={self.valor})>"
+        return f"<Transaction(id={self.id}, descricao='{self.descricao}', valor={self.valor}, source_type='{self.source_type}')>"
 
 
 class AIPromptCache(Base):
@@ -76,3 +80,21 @@ class UserConfig(Base):
 
     def __repr__(self):
         return f"<UserConfig(user_id={self.user_id}, spreadsheet_id={self.spreadsheet_id})>"
+
+
+class Goal(Base):
+    """Modelo de meta financeira"""
+    __tablename__ = "goals"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False, comment="ID do usuário Telegram")
+    categoria = Column(String(50), nullable=False, comment="Categoria da meta")
+    valor_meta = Column(Numeric(10, 2), nullable=False, comment="Valor da meta mensal")
+    mes = Column(Integer, nullable=False, comment="Mês da meta (1-12)")
+    ano = Column(Integer, nullable=False, comment="Ano da meta")
+
+    created_at = Column(DateTime, default=func.now(), comment="Data de criação")
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), comment="Última atualização")
+
+    def __repr__(self):
+        return f"<Goal(id={self.id}, user_id={self.user_id}, categoria='{self.categoria}', valor_meta={self.valor_meta}, mes={self.mes}, ano={self.ano})>"
