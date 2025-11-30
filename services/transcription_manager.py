@@ -60,7 +60,7 @@ class TranscriptionManager:
                 print(f"Erro na limpeza automática de transcrições: {e}")
                 await asyncio.sleep(60)
     
-    def add_pending_transcription(self, user_id: int, message_id: int, transcribed_text: str, timeout_minutes: int = 5) -> str:
+    def add_pending_transcription(self, user_id: int, message_id: int, transcribed_text: str, timeout_minutes: int = 1) -> str:
         """Adicionar transcrição pendente"""
         # Tentar iniciar cleanup se ainda não foi iniciado
         if not self._cleanup_started:

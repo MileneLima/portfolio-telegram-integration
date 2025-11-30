@@ -1,38 +1,38 @@
-# 🤖 Telegram Finance Bot
+# Telegram Finance Bot
 
 Bot inteligente de controle financeiro pessoal via Telegram com IA, que interpreta mensagens em linguagem natural e organiza seus gastos automaticamente.
 
-## 📋 Índice
+## Índice
 
-- [Quick Start](#-quick-start)
-- [Sobre o Projeto](#-sobre-o-projeto)
-- [Funcionalidades](#-funcionalidades)
-- [Como Funciona](#-como-funciona)
+- [Quick Start](#quick-start)
+- [Sobre o Projeto](#sobre-o-projeto)
+- [Funcionalidades](#funcionalidades)
+- [Como Funciona](#como-funciona)
   - [Diagramas C4](#diagramas-c4)
-- [Pré-requisitos](#-pré-requisitos)
-- [Configuração](#️-configuração)
+- [Pré-requisitos](#pré-requisitos)
+- [Configuração](#configuração)
   - [1. Telegram Bot](#1-telegram-bot)
   - [2. OpenAI API](#2-openai-api)
   - [3. Google Sheets](#3-google-sheets)
   - [4. Variáveis de Ambiente](#4-variáveis-de-ambiente)
-- [Instalação](#-instalação)
-- [Como Rodar](#️-como-rodar)
-- [Uso do Bot](#-uso-do-bot)
-- [Scripts Auxiliares](#-scripts-auxiliares)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Testes](#-testes)
-- [Tecnologias](#️-tecnologias)
+- [Instalação](#instalação)
+- [Como Rodar](#como-rodar)
+- [Uso do Bot](#uso-do-bot)
+- [Scripts Auxiliares](#scripts-auxiliares)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Testes](#testes)
+- [Tecnologias](#tecnologias)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 **Para Linux/Mac:**
 
 ```bash
 # 1. Clone e entre no diretório
-git clone https://github.com/seu-usuario/telegram-finance-bot.git
-cd telegram-finance-bot
+git clone https://github.com/MileneLima/portfolio-telegram-integration.git
+cd portfolio-telegram-integration
 
 # 2. Execute o setup automático
 chmod +x setup.sh
@@ -51,44 +51,41 @@ chmod +x run_dev.sh
 
 ```bash
 # 1. Clone e entre no diretório
-git clone https://github.com/seu-usuario/telegram-finance-bot.git
-cd telegram-finance-bot
+git clone https://github.com/MileneLima/portfolio-telegram-integration.git
+cd portfolio-telegram-integration
 
-# 2. Crie ambiente virtual e instale dependências
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+# 2. Execute o setup automático
+setup.bat
 
-# 3. Configure
-copy .env.example .env
-mkdir logs
-mkdir credentials
+# 3. Configure suas credenciais
 # - Edite o arquivo .env com suas chaves
 # - Coloque google_service_account.json em credentials/
 
 # 4. Rode o bot
-python main.py
+run_dev.bat
 ```
 
-**Precisa de ajuda para obter as credenciais?** Veja a seção [Configuração](#️-configuração) abaixo.
+**Precisa de ajuda para obter as credenciais?** Veja a seção [Configuração](#configuração) abaixo.
 
 ---
 
-## 🎯 Sobre o Projeto
+## Sobre o Projeto
 
 O **Telegram Finance Bot** é um assistente financeiro pessoal que utiliza inteligência artificial para interpretar suas mensagens sobre gastos em linguagem natural e organizá-las automaticamente em categorias.
 
 **Principais diferenciais:**
-- 🧠 **IA para interpretação**: Usa GPT para entender mensagens como "gastei 50 reais no supermercado"
-- 📊 **Sincronização automática**: Salva dados no SQLite e sincroniza com Google Sheets
-- 💡 **Insights inteligentes**: Gera análises financeiras personalizadas com IA
-- 🏷️ **Categorização automática**: Identifica automaticamente a categoria do gasto
-- 📅 **Inferência de datas**: Entende expressões como "ontem", "semana passada"
-- 💰 **Suporte a investimentos**: Categoria especial "Finanças" para poupança e investimentos
+- IA para interpretação: Usa GPT para entender mensagens como "gastei 50 reais no supermercado"
+- Sincronização automática: Salva dados no SQLite e sincroniza com Google Sheets
+- Insights inteligentes: Gera análises financeiras personalizadas com IA
+- Categorização automática: Identifica automaticamente a categoria do gasto
+- Inferência de datas: Entende expressões como "ontem", "semana passada"
+- Suporte a investimentos: Categoria especial "Finanças" para poupança e investimentos
+- Mensagens de voz: Transcreve automaticamente áudios enviados
+- Sistema de metas: Defina limites mensais por categoria e receba alertas
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 ### Comandos Disponíveis
 
@@ -104,6 +101,18 @@ O **Telegram Finance Bot** é um assistente financeiro pessoal que utiliza intel
 - `/sync clean` - Limpar dados inconsistentes na planilha
 - `/categoria` - Ver todas as categorias disponíveis
 - `/config` - Ver configurações do sistema
+- `/meta <categoria> <valor>` - Definir meta mensal para categoria
+- `/meta <categoria>` - Consultar meta específica
+- `/metas` - Ver todas as metas ativas
+- `/meta limpar` - Remover todas as metas
+
+### Formas de Entrada
+
+**Mensagens de texto:**
+Digite naturalmente seus gastos e o bot interpretará automaticamente.
+
+**Mensagens de voz:**
+Envie um áudio descrevendo seu gasto e o bot transcreverá e processará automaticamente. Suporta áudios de até 25MB e 10 minutos de duração.
 
 ### Categorias Automáticas
 
@@ -117,12 +126,13 @@ O **Telegram Finance Bot** é um assistente financeiro pessoal que utiliza intel
 
 ---
 
-## 🔄 Como Funciona
+## Como Funciona
 
 ### Fluxo de Processamento
 
+**Mensagens de texto:**
 ```
-1. Usuário envia mensagem
+1. Usuário envia mensagem de texto
    ↓
 2. Bot recebe via Telegram API
    ↓
@@ -130,11 +140,32 @@ O **Telegram Finance Bot** é um assistente financeiro pessoal que utiliza intel
    ↓
 4. Extrai: descrição, valor, categoria, data
    ↓
-5. Salva no banco SQLite (fonte principal)
+5. Verifica metas e calcula progresso
    ↓
-6. Sincroniza com Google Sheets (visualização)
+6. Salva no banco SQLite (fonte principal)
    ↓
-7. Retorna confirmação ao usuário
+7. Sincroniza com Google Sheets (visualização)
+   ↓
+8. Retorna confirmação ao usuário
+   ↓
+9. Envia alertas de meta se necessário
+```
+
+**Mensagens de voz:**
+```
+1. Usuário envia áudio
+   ↓
+2. Bot baixa o arquivo
+   ↓
+3. OpenAI Whisper transcreve o áudio
+   ↓
+4. Exibe transcrição para confirmação
+   ↓
+5. Usuário confirma ou rejeita
+   ↓
+6. Se confirmado, processa como mensagem de texto
+   ↓
+7. Salva com marcação de origem "áudio transcrito"
 ```
 
 ### Diagramas C4
@@ -247,15 +278,65 @@ graph TB
 
 ### Exemplo de Uso
 
+**Mensagem de texto:**
 ```
 Você: "gastei 45 reais no uber ontem"
 
-Bot: ✅ Gasto registrado com sucesso!
+Bot: Gasto registrado com sucesso!
      🚗 Uber
      Valor: R$ 45.00
      Categoria: Transporte
      Data: 08/11/2025
      Confiança: 95%
+```
+
+**Mensagem de voz:**
+```
+Você: [Envia áudio] "gastei quarenta e cinco reais no uber ontem"
+
+Bot: 🎵 Transcrição concluída!
+     
+     📝 Texto transcrito:
+     "gastei quarenta e cinco reais no uber ontem"
+     
+     Esta transcrição está correta?
+     • ✅ Sim - Processar como gasto
+     • ❌ Não - Enviar áudio novamente
+
+[Você confirma]
+
+Bot: 🎵 Gasto de áudio registrado com sucesso!
+     🚗 Uber
+     Valor: R$ 45.00
+     Categoria: Transporte
+     Data: 08/11/2025
+     🔊 Origem: Áudio transcrito
+```
+
+**Sistema de metas:**
+```
+Você: /meta Transporte 300
+
+Bot: 🚗 Meta definida com sucesso!
+     
+     Categoria: Transporte
+     Valor da meta: R$ 300.00
+     Período: Novembro/2025
+     
+     📊 Progresso atual:
+     • Gasto: R$ 45.00
+     • Progresso: 15.0%
+     • Status: ✅ Dentro Da Meta
+
+[Após mais gastos...]
+
+Bot: ⚠️ Alerta de Meta - Transporte
+     
+     🚗 Você atingiu 85.0% da sua meta!
+     
+     💰 Meta: R$ 300.00
+     📊 Gasto: R$ 255.00
+     💚 Disponível: R$ 45.00
 ```
 
 ### Arquitetura
@@ -289,7 +370,7 @@ O sistema segue uma arquitetura em camadas com separação clara de responsabili
 
 ---
 
-## 📦 Pré-requisitos
+## Pré-requisitos
 
 - Python 3.9+
 - Conta no Telegram
@@ -298,7 +379,7 @@ O sistema segue uma arquitetura em camadas com separação clara de responsabili
 
 ---
 
-## ⚙️ Configuração
+## Configuração
 
 ### 1. Telegram Bot
 
@@ -407,7 +488,7 @@ DEFAULT_CATEGORIES=Alimentação,Transporte,Saúde,Lazer,Casa,Finanças,Outros
 
 ---
 
-## 🚀 Instalação
+## Instalação
 
 ### Opção 1: Instalação Local (Linux/Mac)
 
@@ -433,7 +514,7 @@ O script irá automaticamente:
    - Edite o arquivo `.env` com suas chaves
    - Coloque o arquivo `google_service_account.json` na pasta `credentials/`
 
-### Opção 1b: Instalação Manual (Windows)
+### Opção 1b: Instalação Local (Windows)
 
 1. Clone o repositório:
 ```bash
@@ -441,30 +522,20 @@ git clone https://github.com/seu-usuario/telegram-finance-bot.git
 cd telegram-finance-bot
 ```
 
-2. Crie um ambiente virtual:
+2. Execute o script de setup:
 ```bash
-python -m venv .venv
-.venv\Scripts\activate
+setup.bat
 ```
 
-3. Instale as dependências:
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
+O script irá automaticamente:
+- ✅ Criar ambiente virtual Python
+- ✅ Instalar todas as dependências
+- ✅ Criar diretórios necessários (logs, credentials)
+- ✅ Copiar arquivo `.env.example` para `.env`
 
-4. Crie as pastas necessárias:
-```bash
-mkdir logs
-mkdir credentials
-```
-
-5. Configure o arquivo `.env`:
-```bash
-copy .env.example .env
-```
-
-6. Coloque o arquivo `google_service_account.json` na pasta `credentials/`
+3. Configure suas credenciais:
+   - Edite o arquivo `.env` com suas chaves
+   - Coloque o arquivo `google_service_account.json` na pasta `credentials/`
 
 ### Opção 2: Docker (Recomendado para Produção)
 
@@ -479,11 +550,11 @@ docker-compose build
 docker-compose up -d
 ```
 
-**Nota:** Os scripts `setup.sh` e `run_dev.sh` facilitam muito o processo de instalação e execução em ambientes Linux/Mac, automatizando validações e configurações!
+**Nota:** Os scripts de setup e execução (`setup.sh`/`setup.bat` e `run_dev.sh`/`run_dev.bat`) facilitam muito o processo de instalação e execução, automatizando validações e configurações!
 
 ---
 
-## ▶️ Como Rodar
+## Como Rodar
 
 ### Modo Desenvolvimento (Linux/Mac)
 
@@ -502,13 +573,17 @@ O script irá:
 
 ### Modo Desenvolvimento (Windows)
 
-```bash
-# Ativar ambiente virtual
-.venv\Scripts\activate
+Use o script de desenvolvimento que já ativa o ambiente virtual e valida as configurações:
 
-# Rodar aplicação
-python main.py
+```bash
+run_dev.bat
 ```
+
+O script irá:
+- ✅ Ativar o ambiente virtual automaticamente
+- ✅ Verificar se o arquivo `.env` existe
+- ✅ Verificar se as credenciais Google estão configuradas
+- ✅ Iniciar a aplicação
 
 O servidor estará disponível em: `http://localhost:8000`
 
@@ -532,9 +607,9 @@ tail -f logs/app.log  # Local
 
 ---
 
-## 💬 Uso do Bot
+## Uso do Bot
 
-### Exemplos de Mensagens
+### Exemplos de Mensagens de Texto
 
 O bot entende linguagem natural. Exemplos:
 
@@ -555,7 +630,51 @@ O bot entende linguagem natural. Exemplos:
 "reserva de emergência 1000 reais"
 ```
 
-**Comandos de relatório:**
+### Exemplos de Mensagens de Voz
+
+Grave um áudio descrevendo seu gasto:
+```
+"Gastei vinte e cinco reais no supermercado hoje"
+"Uber quinze reais"
+"Almoço no restaurante quarenta e cinco reais"
+"Guardei trezentos reais na poupança"
+```
+
+O bot transcreverá o áudio e pedirá confirmação antes de processar.
+
+### Gerenciamento de Metas
+
+**Definir meta mensal:**
+```
+/meta Alimentação 500
+/meta Transporte 300
+/meta Lazer 200
+```
+
+**Consultar meta:**
+```
+/meta Alimentação
+```
+
+**Ver todas as metas:**
+```
+/metas
+```
+
+**Remover meta específica:**
+```
+/meta Alimentação 0
+```
+
+**Limpar todas as metas:**
+```
+/meta limpar
+```
+
+O sistema enviará alertas automáticos quando você atingir 80% e 100% da meta definida.
+
+### Comandos de Relatório
+
 ```
 /resumo              → Resumo do mês atual
 /resumo janeiro      → Resumo de janeiro
@@ -567,8 +686,9 @@ O bot entende linguagem natural. Exemplos:
 
 ### Resposta do Bot
 
+**Mensagem de texto:**
 ```
-✅ Gasto registrado com sucesso!
+Gasto registrado com sucesso!
 
 🍔 Supermercado
 Valor: R$ 25.00
@@ -578,12 +698,33 @@ Data: 09/11/2025
 Confiança: 95%
 ID: #123
 
+🎯 Meta de Alimentação:
+   ✅ R$ 325.00 / R$ 500.00 (65.0%)
+   💚 Disponível: R$ 175.00
+
+Salvo na planilha Google! Use /resumo para ver totais.
+```
+
+**Mensagem de voz:**
+```
+🎵 Gasto de áudio registrado com sucesso!
+
+🍔 Supermercado
+Valor: R$ 25.00
+Categoria: Alimentação
+Data: 09/11/2025
+
+📝 Texto transcrito: "gastei vinte e cinco reais no supermercado"
+🔊 Origem: Áudio transcrito
+Confiança: 95%
+ID: #123
+
 Salvo na planilha Google! Use /resumo para ver totais.
 ```
 
 ---
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 telegram-finance-bot/
@@ -603,9 +744,12 @@ telegram-finance-bot/
 │   └── schemas.py               # Modelos de dados
 ├── services/                     # Serviços externos
 │   ├── __init__.py
-│   ├── openai_service.py        # Integração OpenAI
+│   ├── openai_service.py        # Integração OpenAI (interpretação e transcrição)
 │   ├── sheets_service.py        # Integração Google Sheets
-│   └── database_service.py      # Queries do banco
+│   ├── database_service.py      # Queries do banco
+│   ├── audio_service.py         # Processamento de áudio
+│   ├── goal_service.py          # Gerenciamento de metas
+│   └── transcription_manager.py # Gerenciamento de transcrições pendentes
 ├── utils/                        # Utilitários
 │   ├── __init__.py
 │   └── helpers.py               # Funções auxiliares
@@ -629,9 +773,11 @@ telegram-finance-bot/
 
 ---
 
-## 🔧 Scripts Auxiliares
+## Scripts Auxiliares
 
-### `setup.sh` (Linux/Mac)
+### Linux/Mac
+
+**`setup.sh` - Configuração inicial**
 
 Script de configuração inicial que automatiza todo o processo de instalação:
 
@@ -648,7 +794,7 @@ chmod +x setup.sh
 - ✅ Copia `.env.example` para `.env` (se não existir)
 - ✅ Exibe links úteis para obter credenciais
 
-### `run_dev.sh` (Linux/Mac)
+**`run_dev.sh` - Execução em desenvolvimento**
 
 Script para rodar o bot em modo desenvolvimento com validações:
 
@@ -664,15 +810,50 @@ chmod +x run_dev.sh
 - ✅ Alerta se as credenciais Google não foram encontradas
 - ✅ Inicia a aplicação com `python main.py`
 
-**Vantagens dos scripts:**
-- 🚀 Setup em um único comando
-- 🔍 Validações automáticas de configuração
-- ⚡ Economia de tempo e redução de erros
-- 📝 Mensagens claras sobre o que está acontecendo
+### Windows
+
+**`setup.bat` - Configuração inicial**
+
+Script de configuração inicial que automatiza todo o processo de instalação:
+
+```bash
+setup.bat
+```
+
+**O que o script faz:**
+- ✅ Cria ambiente virtual Python (`.venv`)
+- ✅ Atualiza o pip para última versão
+- ✅ Instala todas as dependências do `requirements.txt`
+- ✅ Cria diretórios necessários (`logs/`, `credentials/`)
+- ✅ Copia `.env.example` para `.env` (se não existir)
+- ✅ Exibe links úteis para obter credenciais
+
+**`run_dev.bat` - Execução em desenvolvimento**
+
+Script para rodar o bot em modo desenvolvimento com validações:
+
+```bash
+run_dev.bat
+```
+
+**O que o script faz:**
+- ✅ Verifica se o ambiente virtual existe
+- ✅ Ativa o ambiente virtual automaticamente
+- ✅ Valida se o arquivo `.env` está configurado
+- ✅ Alerta se as credenciais Google não foram encontradas
+- ✅ Inicia a aplicação com `python main.py`
+
+### Vantagens dos Scripts
+
+- Setup em um único comando
+- Validações automáticas de configuração
+- Economia de tempo e redução de erros
+- Mensagens claras sobre o que está acontecendo
+- Compatibilidade multiplataforma (Linux/Mac/Windows)
 
 ---
 
-## 🧪 Testes
+## Testes
 
 ### Rodar todos os testes
 
@@ -701,7 +882,7 @@ pytest --cov=. --cov-report=html
 
 ---
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 ### Backend
 - **FastAPI** - Framework web moderno e rápido
@@ -710,7 +891,8 @@ pytest --cov=. --cov-report=html
 - **Pydantic** - Validação de dados
 
 ### IA e Processamento
-- **OpenAI GPT** - Interpretação de linguagem natural
+- **OpenAI GPT** - Interpretação de linguagem natural e geração de insights
+- **OpenAI Whisper** - Transcrição de áudio para texto
 - **Loguru** - Logging avançado
 
 ### Armazenamento
@@ -724,16 +906,16 @@ pytest --cov=. --cov-report=html
 
 ---
 
-## 📊 Exemplo de Planilha Google Sheets
+## Exemplo de Planilha Google Sheets
 
 O bot cria automaticamente a seguinte estrutura:
 
 **Aba "Janeiro":**
-| ID  | Data       | Descrição    | Categoria    | Valor  | Observações    |
-|-----|------------|--------------|--------------|--------|----------------|
-| 1   | 15/01/2025 | Supermercado | Alimentação  | 150.00 | Confiança: 95% |
-| 2   | 16/01/2025 | Uber         | Transporte   | 25.00  | Confiança: 98% |
-| 3   | 17/01/2025 | Poupança     | Finanças     | 500.00 | Confiança: 99% |
+| ID  | Data       | Descrição    | Categoria    | Valor  | Observações              |
+|-----|------------|--------------|--------------|--------|--------------------------|
+| 1   | 15/01/2025 | Supermercado | Alimentação  | 150.00 | Confiança: 95%           |
+| 2   | 16/01/2025 | Uber         | Transporte   | 25.00  | Confiança: 98% (Áudio)   |
+| 3   | 17/01/2025 | Poupança     | Finanças     | 500.00 | Confiança: 99%           |
 
 **Aba "Resumo":**
 | Mês      | Total Gastos | Alimentação | Transporte | Saúde | Lazer | Casa | Finanças | Outros | Transações |
@@ -743,17 +925,19 @@ O bot cria automaticamente a seguinte estrutura:
 
 ---
 
-## 🔒 Segurança
+## Segurança
 
-- ✅ Credenciais em variáveis de ambiente
-- ✅ Arquivo `.env` não versionado
-- ✅ Service Account com permissões mínimas
-- ✅ Validação de dados com Pydantic
-- ✅ Logs estruturados sem dados sensíveis
+- Credenciais em variáveis de ambiente
+- Arquivo `.env` não versionado
+- Service Account com permissões mínimas
+- Validação de dados com Pydantic
+- Logs estruturados sem dados sensíveis
+- Arquivos de áudio temporários são removidos após processamento
+- Transcrições pendentes expiram automaticamente após 1 minuto
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Erro: "permission denied" ao executar scripts
 **Linux/Mac:**
@@ -799,3 +983,16 @@ Execute o setup novamente:
 - Verifique se o arquivo `.env` está configurado
 - Rode: `pytest -v --tb=short` para ver detalhes
 - Certifique-se de que o ambiente virtual está ativo
+
+### Erro ao processar áudio
+- Verifique se o arquivo tem menos de 25MB
+- Certifique-se de que o formato é suportado (MP3, WAV, M4A, OGG, WebM)
+- Grave em ambiente silencioso para melhor qualidade
+- Fale claramente e próximo ao microfone
+- Se persistir, use mensagem de texto
+
+### Metas não aparecem
+- Verifique se definiu a meta para o mês/ano atual
+- Use `/metas` para listar todas as metas ativas
+- Certifique-se de usar o nome correto da categoria
+- Use `/categoria` para ver categorias disponíveis

@@ -857,12 +857,19 @@ Detalhes: {str(e)}
             emoji = category_emoji.get(categoria.value, "🎯")
             status_emoji = "✅" if progress.status.value == "dentro_meta" else "⚠️" if progress.status.value == "proximo_limite" else "🚨"
             
+            # Nomes dos meses em português
+            meses_pt = [
+                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+            ]
+            mes_nome = meses_pt[now.month - 1]
+            
             confirmation = f"""
 {emoji} **Meta definida com sucesso!**
 
 **Categoria:** {categoria.value}
 **Valor da meta:** R$ {valor:.2f}
-**Período:** {now.strftime('%B/%Y')}
+**Período:** {mes_nome}/{now.year}
 
 📊 **Progresso atual:**
 • Gasto: R$ {progress.valor_gasto:.2f}
@@ -948,6 +955,13 @@ Use /metas para ver todas as suas metas!
             # Calcular quanto falta
             falta = progress.valor_meta - progress.valor_gasto
             
+            # Nomes dos meses em português
+            meses_pt = [
+                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+            ]
+            mes_nome = meses_pt[now.month - 1]
+            
             message = f"""
 {emoji} **Meta de {categoria.value}**
 
@@ -958,7 +972,7 @@ Use /metas para ver todas as suas metas!
 
 {'💚 **Disponível:** R$ ' + f'{falta:.2f}' if falta > 0 else '🚨 **Excedido em:** R$ ' + f'{abs(falta):.2f}'}
 
-**Período:** {now.strftime('%B/%Y')}
+**Período:** {mes_nome}/{now.year}
 
 💡 **Dica:** Use `/meta {categoria.value} 0` para remover esta meta
             """
@@ -1161,8 +1175,15 @@ Exemplo: `/meta Alimentação 0`
             # Calcular progresso geral
             progresso_geral = float((total_gasto / total_meta) * 100) if total_meta > 0 else 0
             
+            # Nomes dos meses em português
+            meses_pt = [
+                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+            ]
+            mes_nome = meses_pt[now.month - 1]
+            
             message = f"""
-📊 **Suas Metas - {now.strftime('%B/%Y')}**
+📊 **Suas Metas - {mes_nome}/{now.year}**
 {metas_text}
 ━━━━━━━━━━━━━━━━━━━━
 💰 **Total:** R$ {total_meta:.2f}
@@ -1524,7 +1545,7 @@ Salvo na planilha Google! Use /resumo para ver totais.
 • ✅ **Sim** - Processar como gasto
 • ❌ **Não** - Enviar áudio novamente
 
-⏰ *Esta confirmação expira em 5 minutos*
+⏰ *Esta confirmação expira em 1 minuto*
         """
         
         await processing_message.edit_text(
@@ -1790,7 +1811,7 @@ Salvo na planilha Google! Use /resumo para ver totais.
         try:
             timeout_message = (
                 "⏰ **Confirmação expirada**\n\n"
-                "Sua transcrição de áudio expirou após 5 minutos sem resposta.\n\n"
+                "Sua transcrição de áudio expirou após 1 minuto sem resposta.\n\n"
                 "💡 **Para continuar:**\n"
                 "• Envie o áudio novamente\n"
                 "• Ou digite seu gasto manualmente\n\n"
